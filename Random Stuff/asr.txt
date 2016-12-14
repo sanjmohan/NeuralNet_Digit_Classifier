@@ -1,0 +1,121 @@
+to do:
+make pictures that look like possible inputs
+gui
+new network?
+change grey border
+learning rate?
+validation set?
+test different topologies
+MAKE OWN DATA SET FOR TESTING
+
+
+error analysis:
+align left and top
+expand to fill 21x21 square
+initially used pillow, then scipy images, converted image vector to actual images to reformat
+ - changed to vanilla matrix alterations
+change from aligning top left pixel to bounding box
+change from tight bounding rectangle to square to avoid distortions
+change from left+top to center
+make maximum scalefactor to avoid a dot becoming a full image
+make expanded data set by adding small pixel translations
+sucks at 7s, 8s, and mostly 9s
+using my own dataset of 100 images i drew with my standarization algo, i tested two different networks
+- each network had architecture (784, 100, 10), each used 30 epochs, minibatch of 10, and eta of 3
+- one network, expandednetwork, was trained on the dataset of 250k images composed of base 50k plus 4 translations of 2 pixels for each image
+- the other network, basenetwork, was trained only on the dataset of the standard 50k images
+- each was tested on the standard 10k mnist test images and on my own 100 images
+- expanded network: 97.69%, 86.0%; basenetwork: 97.92%, 65.0%. how can this be??
+----------
+supernetwork = loadNetwork(name="net_exp_set_9769")
+supernetwork2 = loadNetwork(name="net_stan_set_97")
+
+f = gzip.open("myimages.pkl.gz", "rb")
+myTestData = pickle.load(f, encoding="latin1")
+f.close()
+
+evaluate(supernetwork, testData)
+evaluate(supernetwork2, testData)
+evaluate(supernetwork, myTestData)
+evaluate(supernetwork2, myTestData)
+---------
+changing learning rate (eta) on standard trained network by +/- 0.1 changed accuracy on standard test images by -0.14% and -0.23% respectively; 3.0 is best
+we got overflow error in sigmoid function, so change weight initialization from stand. dev. of 1 to stand. dev. of sqrt(1/numInputs); also speeds learning
+promote lower magnitude biases and weights (and prevent outputs from being far to left or right on sigmoid graph and thus hard to change)
+make my own images (100, 10 of each digit), expand to 500 images by generating +/- 20 deg. and +/- 10 deg. rotations of each
+mytestimages = 100, 10 of each digit, generated using gui
+
+
+
+highlights:
+neural network architecture
+ - backprop algo
+ - michael neilsen
+mnist data set (format)
+python language
+anaconda accelerate from continuum analytics (numpy optimizations)
+tkinter
+expanded set
+image standardization
+error analysis
+gui from thenewboston youtube
+
+
+How it works:
+quadratic cost function estimates cost as (1/2n)(Sum(||y(x) - a||^2)
+ - cost function uses average cost of randomly selected training images of size 	"mini-batch" and repeats for each mini-batch in the data
+nabla C is computed = vector of partial derivatives of C with respect to weights and vector w/respect to biases (eg dC/dwi, dC/dwj and dC/dbi, etc.)
+ - nabla C is the gradient of the cost function; it is calculated using backprop algo
+once gradient is computed, biases and weights are updated by making the new bias or weight the old one minus eta times nabla C, eta = learning rate
+ - because (dy/dx) times delta x = delta y, small change (delta C) = (nabla C) (dot) (delta weights or biases)
+ - thus, if we choose (delta weight or bias) = -(eta)(nabla C), then  (delta C) = (nabla C) (dot) (-eta)(nabla C) = (-eta)(nabla C)^2
+       - since (nabla C)^2 is always positive, (delta C) is always negative, so C decreases if  weight += (delta weight), where (delta weight) = (-eta)(nabla C)
+whole process repeated (whole training data set iterated over again) for multiple epochs to continously minimize C
+
+"mnist_stand test: "  - lr = 0.5
+mnist test - 95.84999999999107 % correct
+mytestimages - 42.00000000000002 % correct
+mytestimages_expanded - 40.00000000000003 % correct
+
+mnist_exp test: "  - lr = 0.5
+97.15999999999093 % correct
+64.00000000000003 % correct
+59.40000000000004 % correct
+
+mnist_short test: "  - lr = 0.5
+94.77999999999119 % correct
+48.00000000000003 % correct
+47.80000000000004 % correct
+
+mnist_20k_myimgs_5k: " - lr = 0.5
+90.2399999999917 % correct
+33.000000000000014 % correct
+30.00000000000002 % correct
+
+mnist_20k_myimgs_5k: " - lr = 0.1
+92.79999999999141 % correct
+48.00000000000003 % correct
+47.60000000000004 % correct
+
+mnist20k_myimgs20k  - lr = 0.1
+72.0099999999937 % correct
+33.000000000000014 % correct
+29.60000000000002 % correct
+
+smooth images:
+stand
+95.84999999999107 % correct
+64.00000000000003 % correct
+63.600000000000044 % correct
+exp
+97.15999999999093 % correct
+83.00000000000006 % correct
+85.20000000000006 % correct
+short
+94.77999999999119 % correct
+77.00000000000004 % correct
+76.00000000000006 % correct
+short + 5k own (wtf...)
+11.59000000000181 % correct
+29.00000000000001 % correct
+28.40000000000002 % correct
